@@ -1,0 +1,76 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Large Text"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+    <TextView
+        android:id="@+id/tvBeacon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Large Text" />
+
+    <Button
+        android:id="@+id/btScanBeacon"
+        android:layout_width="166dp"
+        android:layout_height="wrap_content"
+        android:text="Scan Beacon"
+        android:layout_gravity="right" />
+
+    <Button
+        android:id="@+id/btBeaconList"
+        android:layout_width="169dp"
+        android:layout_height="wrap_content"
+        android:text="Beacon List" />
+
+    <Button
+        android:id="@+id/btNewBeacon"
+        android:layout_width="171dp"
+        android:layout_height="wrap_content"
+        android:text="New Beacon" />
+
+    <Button
+        android:id="@+id/btLocationList"
+        android:layout_width="158dp"
+        android:layout_height="wrap_content"
+        android:text="Location List"
+        android:layout_gravity="right" />
+
+    <Button
+        android:id="@+id/btNewLocation"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:text="New Location"
+        android:layout_gravity="right" />
+
+    <Button
+        android:id="@+id/btEquipmentList"
+        android:layout_width="175dp"
+        android:layout_height="wrap_content"
+        android:text="Equipment List" />
+
+    <Button
+        android:id="@+id/btNewEquipment"
+        android:layout_width="177dp"
+        android:layout_height="wrap_content"
+        android:text="New Equipment" />
+
+    <Button
+        android:id="@+id/btMovie"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Movie List"
+        android:layout_gravity="right" />
+
+</LinearLayout>

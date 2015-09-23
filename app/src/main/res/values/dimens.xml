@@ -1,0 +1,9 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">10dp</dimen>
+    <dimen name="activity_vertical_margin">10dp</dimen>
+    <dimen name="list_item_movie_title">17dp</dimen>
+    <dimen name="list_item_movie_rating">15dip</dimen>
+    <dimen name="list_item_movie_genre">13dip</dimen>
+    <dimen name="list_item_movie_year">12dip</dimen>
+</resources>

@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Asset Tracking</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_new_beacon">New Beacon</string>
+    <string name="title_activity_scan_beacon">Scan Beacon</string>
+    <string name="title_activity_movie">MovieActivity</string>
+    <string name="title_activity_beacon_list">Beacon List</string>
+    <string name="title_activity_new_asset">New Asset</string>
+    <string name="title_activity_new_location">New Location</string>
+    <string name="title_activity_view_location">View Location</string>
+    <string name="title_activity_pick_beacon">Pick a Beacon</string>
+    <string name="title_activity_location_list">Location List</string>
+    <string name="title_activity_equipment_list">Equipment List</string>
+    <string name="title_activity_view_equipment">View Equipment</string>
+</resources>
