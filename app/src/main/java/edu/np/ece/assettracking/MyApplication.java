@@ -2,6 +2,7 @@ package edu.np.ece.assettracking;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.text.TextUtils;
 
 import com.android.volley.Request;
@@ -37,6 +38,8 @@ public class MyApplication extends Application {
         //-- For Monitoring
 //        beaconManager.setMonitoringListener(monitoringListener);
 //        beaconManager.connect(serviceReadyCallback);
+
+        startService(new Intent(this, BeaconScanningService.class));
     }
 
     public BeaconManager getBeaconManager() {

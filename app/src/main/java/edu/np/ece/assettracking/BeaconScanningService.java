@@ -19,19 +19,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import edu.np.ece.assettracking.model.BeaconData;
 import edu.np.ece.assettracking.util.Constant;
 import edu.np.ece.assettracking.util.CustomJsonObjectRequest;
@@ -46,7 +40,6 @@ public class BeaconScanningService extends Service {
     NotificationManager mNotificationManager;
     ArrayList<BeaconData> arrayList;
     private BeaconManager beaconManager;
-    private AsyncHttpClient mHttpClient;
     Gson gson = new Gson();
 
     public BeaconScanningService() {
@@ -60,7 +53,6 @@ public class BeaconScanningService extends Service {
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate");
-        mHttpClient = new AsyncHttpClient();
         beaconManager = new BeaconManager(getApplicationContext());
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     }
@@ -143,43 +135,6 @@ public class BeaconScanningService extends Service {
         });
     }
 
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void uploadNearbyBeaconsTemp(List<Beacon> list) {
-        // Upload beacons info to Server
-        String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_check_nearby_beacons");
-
-        Gson gson = new GsonBuilder().create();
-        JsonArray myCustomArray = gson.toJsonTree(list).getAsJsonArray();
-        JsonObject obj = new JsonObject();
-        obj.add("beacons", myCustomArray);
-
-        ByteArrayEntity entity = null;
-        try {
-            byte[] input = obj.toString().getBytes("UTF-8");
-            entity = new ByteArrayEntity(input);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        mHttpClient.post(this, url, entity, "application/json", new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                Log.d(TAG, "onSuccess");
-                Log.d(TAG, "Status: " + String.valueOf(statusCode));
-                Log.d(TAG, "Body: " + Arrays.toString(responseBody));
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                Log.d(TAG, "onFailure");
-                Log.d(TAG, "Status: " + String.valueOf(statusCode));
-                Log.d(TAG, "Body: " + Arrays.toString(responseBody));
-            }
-        });
-    }
 
     private void uploadNearbyBeacons(final List<Beacon> list) {
         String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_check_nearby_beacons");

@@ -33,5 +33,5 @@ dependencies {
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
     compile 'com.google.code.gson:gson:2.3'
-    compile 'com.loopj.android:android-async-http:1.4.9'
+    compile 'com.android.support:design:22.2.1'
 }

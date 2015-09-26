@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -55,12 +56,14 @@ public class LocationListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location_list);
 
-        tvInfo = (TextView) this.findViewById(R.id.tvInfo);
+        android.support.v7.app.ActionBar actionbar = getSupportActionBar();
+        if (actionbar != null)
+            actionbar.setDisplayHomeAsUpEnabled(true);
 
+        tvInfo = (TextView) this.findViewById(R.id.tvInfo);
         listView = (ListView) findViewById(R.id.lvLocation);
         adapter = new CustomLocationAdapter(this, arrayList);
         listView.setAdapter(adapter);
-
         listView.setOnItemClickListener(listViewListener);
 
         showProgressDialog();
@@ -155,4 +158,17 @@ public class LocationListActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
+            case R.id.action_settings:
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 }

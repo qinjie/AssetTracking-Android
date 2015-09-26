@@ -1,4 +1,4 @@
-package edu.np.ece.assettracking;
+package edu.np.ece.assettracking.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;

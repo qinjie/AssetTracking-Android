@@ -42,6 +42,11 @@ public class NewBeaconActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_beacon);
 
+        android.support.v7.app.ActionBar actionbar = getSupportActionBar();
+        if (actionbar != null)
+            actionbar.setDisplayHomeAsUpEnabled(true);
+
+
         etUuid = (EditText) findViewById(R.id.etUuid);
         etMajor = (EditText) findViewById(R.id.etMajor);
         etMinor = (EditText) findViewById(R.id.etMinor);
@@ -116,14 +121,13 @@ public class NewBeaconActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
+            case R.id.action_settings:
+                return true;
         }
 
         return super.onOptionsItemSelected(item);

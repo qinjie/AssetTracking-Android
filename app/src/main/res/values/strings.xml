@@ -14,4 +14,31 @@
     <string name="title_activity_location_list">Location List</string>
     <string name="title_activity_equipment_list">Equipment List</string>
     <string name="title_activity_view_equipment">View Equipment</string>
+
+    <string name="drawer_open">Slider Menu Opened</string>
+    <string name="drawer_close">Slider Menu Closed</string>
+
+    <!-- Nav Drawer Menu Items -->
+    <string-array name="nav_drawer_items">
+        <item>Beacon List</item>
+        <item>New Beacon</item>
+        <item>Location List</item>
+        <item>New Location</item>
+        <item>Equipment List</item>
+        <item>New Equipment</item>
+    </string-array>
+
+    <!-- Nav Drawer List Item Icons -->
+    <!-- Keep them in order as the titles are in -->
+    <array name="nav_drawer_icons">
+        <item>@mipmap/ic_action_search</item>
+        <item>@mipmap/ic_action_add</item>
+        <item>@mipmap/ic_action_search</item>
+        <item>@mipmap/ic_action_add</item>
+        <item>@mipmap/ic_action_search</item>
+        <item>@mipmap/ic_action_add</item>
+    </array>
+
+    <!-- Content Description -->
+    <string name="desc_list_item_icon">Item Icon</string>
 </resources>
