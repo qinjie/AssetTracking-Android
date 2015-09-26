@@ -131,6 +131,11 @@
     </LinearLayout>
 
     <Button
+        android:id="@+id/btRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan Nearby Beacon" />
+    <Button
         android:id="@+id/btRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

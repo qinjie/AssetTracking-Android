@@ -19,6 +19,7 @@ import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,7 +28,6 @@ import org.json.JSONObject;
 import java.util.List;
 
 import edu.np.ece.assettracking.model.BeaconData;
-import edu.np.ece.assettracking.model.LocationData;
 import edu.np.ece.assettracking.util.Constant;
 import edu.np.ece.assettracking.util.CustomJsonObjectRequest;
 
@@ -40,10 +40,10 @@ public class NewBeaconActivity extends AppCompatActivity {
 
     EditText etId, etUuid, etMajor, etMinor, etName;
     TextView tvCreated, tvInfo;
-    Button btRegister;
+    Button btRegister, btRefresh;
     LinearLayout containerCreated;
 
-    private View.OnClickListener buttonListener = new View.OnClickListener() {
+    private View.OnClickListener btRegisterListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
 
@@ -66,6 +66,22 @@ public class NewBeaconActivity extends AppCompatActivity {
                 data.setId(Integer.valueOf(id));
                 callApiUpdateBeacon(data);
             }
+        }
+    };
+    private View.OnClickListener btRefreshListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
+                @Override
+                public void onServiceReady() {
+                    try {
+                        beaconManager.startRanging(region);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
         }
     };
 
@@ -92,7 +108,10 @@ public class NewBeaconActivity extends AppCompatActivity {
         containerCreated.setVisibility(View.INVISIBLE);
         tvCreated = (TextView) findViewById(R.id.tvCreated);
         btRegister = (Button) findViewById(R.id.btRegister);
-        btRegister.setOnClickListener(buttonListener);
+        btRegister.setOnClickListener(btRegisterListener);
+
+        btRefresh = (Button) findViewById(R.id.btRefresh);
+        btRefresh.setOnClickListener(btRefreshListener);
 
         beaconManager = ((MyApplication) getApplication()).getBeaconManager();
         region = new Region("ranged region",
@@ -107,8 +126,14 @@ public class NewBeaconActivity extends AppCompatActivity {
                     etUuid.setText(beacon.getProximityUUID().toUpperCase());
                     etMajor.setText(String.valueOf(beacon.getMajor()));
                     etMinor.setText(String.valueOf(beacon.getMinor()));
-
                     callApiGetBeacon(beacon.getProximityUUID(), beacon.getMajor(), beacon.getMinor());
+
+                    try {
+                        beaconManager.stopRanging(region);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+
                 } else {
                     Toast.makeText(getBaseContext(), "No Beacon found.", Toast.LENGTH_SHORT).show();
                 }
@@ -125,10 +150,13 @@ public class NewBeaconActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject json) {
                         try {
-                            etId.setText(String.valueOf(json.getInt("id")));
-                            etId.setVisibility(View.VISIBLE);
-                            tvInfo.setText("Update successful.");
-                            tvInfo.setVisibility(View.VISIBLE);
+                            JSONArray array = json.getJSONArray("items");
+                            if (array.length() <= 0) return;
+                            JSONObject obj = array.getJSONObject(0);
+                            int id = obj.getInt("id");
+                            String name = obj.getString("label");
+                            etId.setText(String.valueOf(id));
+                            etName.setText(name);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -141,7 +169,7 @@ public class NewBeaconActivity extends AppCompatActivity {
 
     private void callApiCreateBeacon(BeaconData data) {
         String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_create");
-        String json = gson.toJson(data, LocationData.class);
+        String json = gson.toJson(data, BeaconData.class);
         CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, json,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -164,22 +192,22 @@ public class NewBeaconActivity extends AppCompatActivity {
     private void callApiUpdateBeacon(BeaconData data) {
         String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_update");
         url = url.replace("<id>", String.valueOf(data.getId()));
-        String json = gson.toJson(data, LocationData.class);
-        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.PUT, url, json,
+//        String json = gson.toJson(data, BeaconData.class);
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", data.getName());
+        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.PUT, url, obj.toString(),
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject json) {
                         try {
-                            JSONArray array = json.getJSONArray("items");
-                            if (array.length() <= 0) return;
-                            JSONObject obj = array.getJSONObject(0);
-                            int id = obj.getInt("id");
-                            String name = obj.getString("label");
-                            etId.setText(String.valueOf(id));
-                            etName.setText(name);
+                            etId.setText(String.valueOf(json.getInt("id")));
+                            etId.setVisibility(View.VISIBLE);
+                            tvInfo.setText("Update successful.");
+                            tvInfo.setVisibility(View.VISIBLE);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
+
                     }
                 },
                 CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
@@ -190,25 +218,10 @@ public class NewBeaconActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
-            @Override
-            public void onServiceReady() {
-                try {
-                    beaconManager.startRanging(region);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
     }
 
     @Override
     protected void onPause() {
-        try {
-            beaconManager.stopRanging(region);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
         super.onPause();
     }
 
