@@ -1,11 +1,7 @@
 package edu.np.ece.assettracking;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,12 +9,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 
 public class MainActivity extends AppCompatActivity {
 
-//    BeaconManager beaconManager;
+    //    BeaconManager beaconManager;
     private Region region;
 
     TextView tvBeacon, tvName;
@@ -126,24 +121,26 @@ public class MainActivity extends AppCompatActivity {
         btAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                scheduleAlarm();
+//                scheduleAlarm();
+                Intent startServiceIntent = new Intent(getApplicationContext(), BeaconScanningService.class);
+                startService(startServiceIntent);
             }
         });
     }
 
-    public void scheduleAlarm() {
-        // Construct an intent that will execute the AlarmReceiver
-        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
-        // Create a PendingIntent to be triggered when the alarm goes off
-        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        long firstMillis = System.currentTimeMillis(); // alarm is set right away
-        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
-        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, 15 * 1000, pIntent);
-        // Setup periodic alarm every 10 seconds
-    }
+//    public void scheduleAlarm() {
+//        // Construct an intent that will execute the AlarmReceiver
+//        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
+//        // Create a PendingIntent to be triggered when the alarm goes off
+//        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
+//                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//        long firstMillis = System.currentTimeMillis(); // alarm is set right away
+//        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+//        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
+//        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
+//        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, Constant.SCAN_PERIOD * 1000, pIntent);
+//        // Setup periodic alarm every 10 seconds
+//    }
 
     @Override
     protected void onResume() {

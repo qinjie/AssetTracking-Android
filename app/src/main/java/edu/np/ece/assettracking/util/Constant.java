@@ -9,6 +9,8 @@ import java.util.Map;
  */
 public class Constant {
 
+    public static final int SCAN_PERIOD = 5;   // sec
+
     public static final Map<String, String> BEACON_NAMES;
 
     static {

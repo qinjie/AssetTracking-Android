@@ -1,22 +1,40 @@
 package edu.np.ece.assettracking;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
-import com.estimote.sdk.Utils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import edu.np.ece.assettracking.model.BeaconData;
+import edu.np.ece.assettracking.util.Constant;
+import edu.np.ece.assettracking.util.CustomJsonObjectRequest;
 
 public class BeaconScanningService extends Service {
     private static final String TAG = BeaconScanningService.class.getSimpleName();
@@ -25,8 +43,11 @@ public class BeaconScanningService extends Service {
             new Region("region1", ESTIMOTE_UUID, null, null),
     };
 
+    NotificationManager mNotificationManager;
     ArrayList<BeaconData> arrayList;
     private BeaconManager beaconManager;
+    private AsyncHttpClient mHttpClient;
+    Gson gson = new Gson();
 
     public BeaconScanningService() {
     }
@@ -39,20 +60,34 @@ public class BeaconScanningService extends Service {
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate");
-
-        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
-        beaconManager.setBackgroundScanPeriod(TimeUnit.SECONDS.toMillis(3), 0);
+        mHttpClient = new AsyncHttpClient();
+        beaconManager = new BeaconManager(getApplicationContext());
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
         // Check if device supports Bluetooth Low Energy.
-        if (!beaconManager.hasBluetooth() || !beaconManager.isBluetoothEnabled()) {
-            Toast.makeText(this, "Device does not have Bluetooth Low Energy or it is not enabled", Toast.LENGTH_LONG).show();
+        if (!beaconManager.hasBluetooth()) {
+            Toast.makeText(this, "Device does not have Bluetooth Low Energy.", Toast.LENGTH_LONG).show();
             this.stopSelf();
         }
-        startMonitoring();
+        if (!beaconManager.isBluetoothEnabled()) {
+            this.stopSelf();
+        }
+//        if (!beaconManager.isBluetoothEnabled()) {
+//            BluetoothUtils.enableBluetooth(true);
+//        }
+        startRanging();
+
+        Notification noti = new Notification.Builder(this)
+                .setContentTitle("Beacon Service Started")
+                .setContentText("Start scanning")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .build();
+        mNotificationManager.notify(1, noti);
+
         return START_STICKY;
     }
 
@@ -60,21 +95,35 @@ public class BeaconScanningService extends Service {
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
         beaconManager.disconnect();
+        mNotificationManager.cancel(1);
+        Notification noti = new Notification.Builder(BeaconScanningService.this)
+                .setContentTitle("Beacon Service Stopped")
+                .setContentText("Stop scanning")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .build();
+        mNotificationManager.notify(1, noti);
     }
 
-    private void startMonitoring() {
-        beaconManager.setBackgroundScanPeriod(TimeUnit.SECONDS.toMillis(1), 1);
+    private void startRanging() {
+        beaconManager.setForegroundScanPeriod(TimeUnit.SECONDS.toMillis(1), Constant.SCAN_PERIOD * 1000);
         beaconManager.setRangingListener(new BeaconManager.RangingListener() {
             @Override
-            public void onBeaconsDiscovered(Region paramRegion, List<Beacon> paramList) {
-                if (paramList != null && !paramList.isEmpty()) {
-                    Beacon beacon = paramList.get(0);
-                    Utils.Proximity proximity = Utils.computeProximity(beacon);
-                    if (proximity == Utils.Proximity.IMMEDIATE) {
-                        Log.d(TAG, "entered in region " + paramRegion.getProximityUUID());
-                    } else if (proximity == Utils.Proximity.FAR) {
-                        Log.d(TAG, "exiting in region " + paramRegion.getProximityUUID());
-                    }
+            public void onBeaconsDiscovered(Region paramRegion, List<Beacon> list) {
+                if (list.size() > 0) {
+                    ArrayList<Beacon> array = new ArrayList<Beacon>(list.size());
+                    array.addAll(list);
+
+//                    //-- For testing purpose
+//                    Beacon b = list.get(0);
+//                    Beacon b1 = new Beacon("B9407F30-F5F8-466E-AFF9-25556B57FE6D", b.getName(), b.getMacAddress(), 58949, 29933, b.getMeasuredPower(), b.getRssi());
+//                    Beacon b2 = new Beacon("B9407F30-F5F8-466E-AFF9-25556B57FE6D", b.getName(), b.getMacAddress(), 24890, 6699, b.getMeasuredPower(), b.getRssi());
+//                    Beacon b3 = new Beacon("B9407F30-F5F8-466E-AFF9-25556B57FE6D", b.getName(), b.getMacAddress(), 0, 0, b.getMeasuredPower(), b.getRssi());
+//                    array.add(b1);
+//                    array.add(b2);
+//                    array.add(b3);
+
+                    Toast.makeText(getApplicationContext(), "Found " + array.size() + " beacon.", Toast.LENGTH_LONG).show();
+                    uploadNearbyBeacons(array);
                 }
             }
         });
@@ -93,4 +142,64 @@ public class BeaconScanningService extends Service {
             }
         });
     }
+
+    /**
+     * Handle action Foo in the provided background thread with the provided
+     * parameters.
+     */
+    private void uploadNearbyBeaconsTemp(List<Beacon> list) {
+        // Upload beacons info to Server
+        String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_check_nearby_beacons");
+
+        Gson gson = new GsonBuilder().create();
+        JsonArray myCustomArray = gson.toJsonTree(list).getAsJsonArray();
+        JsonObject obj = new JsonObject();
+        obj.add("beacons", myCustomArray);
+
+        ByteArrayEntity entity = null;
+        try {
+            byte[] input = obj.toString().getBytes("UTF-8");
+            entity = new ByteArrayEntity(input);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        mHttpClient.post(this, url, entity, "application/json", new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                Log.d(TAG, "onSuccess");
+                Log.d(TAG, "Status: " + String.valueOf(statusCode));
+                Log.d(TAG, "Body: " + Arrays.toString(responseBody));
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.d(TAG, "onFailure");
+                Log.d(TAG, "Status: " + String.valueOf(statusCode));
+                Log.d(TAG, "Body: " + Arrays.toString(responseBody));
+            }
+        });
+    }
+
+    private void uploadNearbyBeacons(final List<Beacon> list) {
+        String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_check_nearby_beacons");
+
+        Gson gson = new GsonBuilder().create();
+        JsonArray myCustomArray = gson.toJsonTree(list).getAsJsonArray();
+        JsonObject obj = new JsonObject();
+        obj.add("beacons", myCustomArray);
+        String str = obj.toString();
+        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, str,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject json) {
+                        Toast.makeText(getBaseContext(), json.toString(), Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, json.toString());
+                    }
+                },
+                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+        );
+        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
+    }
+
 }

@@ -23,6 +23,7 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
+import edu.np.ece.assettracking.util.BluetoothUtils;
 import edu.np.ece.assettracking.util.Constant;
 
 public class BeaconIntentService extends IntentService {
@@ -46,10 +47,14 @@ public class BeaconIntentService extends IntentService {
         super.onCreate();
         mHttpClient = new AsyncHttpClient();
         mBeaconManager = ((MyApplication) getApplication()).getBeaconManager();
+        if (!mBeaconManager.isBluetoothEnabled()) {
+            BluetoothUtils.enableBluetooth(true);
+        }
+        mBeaconManager.setBackgroundScanPeriod(1000, Constant.SCAN_PERIOD * 1000);
         mBeaconManager.setRangingListener(new BeaconManager.RangingListener() {
             @Override
             public void onBeaconsDiscovered(Region region, List<Beacon> list) {
-                if (list.size()>0) {
+                if (list.size() > 0) {
                     uploadNearbyBeacons(list);
                 }
                 try {
@@ -81,6 +86,9 @@ public class BeaconIntentService extends IntentService {
     private void scanNearbyBeacons() {
         // Scan for Beacons
         mRegion = new Region(TAG, null, null, null);
+        if (!mBeaconManager.isBluetoothEnabled()) {
+            return;
+        }
         mBeaconManager.connect(new BeaconManager.ServiceReadyCallback() {
             @Override
             public void onServiceReady() {
