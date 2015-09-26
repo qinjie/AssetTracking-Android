@@ -1,5 +1,8 @@
 package edu.np.ece.assettracking;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -10,23 +13,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 
-import java.util.List;
-
-import edu.np.ece.assettracking.util.Constant;
-
 public class MainActivity extends AppCompatActivity {
 
-    BeaconManager beaconManager;
+//    BeaconManager beaconManager;
     private Region region;
 
     TextView tvBeacon, tvName;
 
     Button btNewBeacon, btScanBeacon, btMovie, btBeaconList;
     Button btNewLocation, btLocationList, btNewEquipment, btEquipmentList;
+    Button btAlarm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,23 +35,23 @@ public class MainActivity extends AppCompatActivity {
         tvBeacon = (TextView) findViewById(R.id.tvBeacon);
         tvName = (TextView) findViewById(R.id.tvName);
 
-        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
-        region = new Region("ranged region",
-                "B9407F30-F5F8-466E-AFF9-25556B57FE6D", null, null);
-
-        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
-            @Override
-            public void onBeaconsDiscovered(Region region, List<Beacon> list) {
-                if (!list.isEmpty()) {
-                    Beacon beacon = list.get(0);
-                    String beaconKey = String.format("%s:%d:%d", beacon.getProximityUUID(), beacon.getMajor(), beacon.getMinor());
-                    beaconKey = beaconKey.toUpperCase();
-                    tvBeacon.setText(beaconKey);
-                    if (Constant.BEACON_NAMES.containsKey(beaconKey))
-                        tvName.setText(Constant.BEACON_NAMES.get(beaconKey));
-                }
-            }
-        });
+//        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
+//        region = new Region("ranged region",
+//                "B9407F30-F5F8-466E-AFF9-25556B57FE6D", null, null);
+//
+//        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+//            @Override
+//            public void onBeaconsDiscovered(Region region, List<Beacon> list) {
+//                if (!list.isEmpty()) {
+//                    Beacon beacon = list.get(0);
+//                    String beaconKey = String.format("%s:%d:%d", beacon.getProximityUUID(), beacon.getMajor(), beacon.getMinor());
+//                    beaconKey = beaconKey.toUpperCase();
+//                    tvBeacon.setText(beaconKey);
+//                    if (Constant.BEACON_NAMES.containsKey(beaconKey))
+//                        tvName.setText(Constant.BEACON_NAMES.get(beaconKey));
+//                }
+//            }
+//        });
 
         btScanBeacon = (Button) findViewById(R.id.btScanBeacon);
         btScanBeacon.setOnClickListener(new View.OnClickListener() {
@@ -122,31 +121,53 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+
+        btAlarm = (Button) findViewById(R.id.btAlarm);
+        btAlarm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                scheduleAlarm();
+            }
+        });
+    }
+
+    public void scheduleAlarm() {
+        // Construct an intent that will execute the AlarmReceiver
+        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
+        // Create a PendingIntent to be triggered when the alarm goes off
+        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        long firstMillis = System.currentTimeMillis(); // alarm is set right away
+        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
+        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, 15 * 1000, pIntent);
+        // Setup periodic alarm every 10 seconds
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
-            @Override
-            public void onServiceReady() {
-                try {
-                    beaconManager.startRanging(region);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
+//            @Override
+//            public void onServiceReady() {
+//                try {
+//                    beaconManager.startRanging(region);
+//                } catch (RemoteException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
     }
 
     @Override
     protected void onPause() {
-        try {
-            beaconManager.stopRanging(region);
-            beaconManager.disconnect();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            beaconManager.stopRanging(region);
+//            beaconManager.disconnect();
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        }
         super.onPause();
     }
 

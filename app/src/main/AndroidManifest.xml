@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="edu.np.ece.assettracking" >
+    package="edu.np.ece.assettracking">
 
     <!-- required to scan for and connect to Estimote Beacons via Bluetooth -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -14,14 +14,14 @@
         android:required="true" />
 
     <application
-        android:name="edu.np.ece.assettracking.MyApplication"
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
-            android:name="edu.np.ece.assettracking.MainActivity"
-            android:label="@string/app_name" >
+            android:name=".MainActivity"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,44 +29,53 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="edu.np.ece.assettracking.NewBeaconActivity"
+            android:name=".NewBeaconActivity"
             android:label="@string/title_activity_new_beacon" />
         <activity
-            android:name="edu.np.ece.assettracking.ScanBeaconActivity"
+            android:name=".ScanBeaconActivity"
             android:label="@string/title_activity_scan_beacon" />
         <activity
-            android:name="edu.np.ece.assettracking.MovieActivity"
+            android:name=".MovieActivity"
             android:label="@string/title_activity_movie" />
         <activity
-            android:name="edu.np.ece.assettracking.BeaconListActivity"
+            android:name=".BeaconListActivity"
             android:label="@string/title_activity_beacon_list" />
         <activity
-            android:name="edu.np.ece.assettracking.NewEquipmentActivity"
+            android:name=".NewEquipmentActivity"
             android:label="@string/title_activity_new_asset" />
+
         <activity
-            android:name="edu.np.ece.assettracking.NewLocationActivity"
-            android:label="@string/title_activity_new_location" >
-        </activity>
+            android:name=".NewLocationActivity"
+            android:label="@string/title_activity_new_location" />
         <activity
-            android:name="edu.np.ece.assettracking.ViewLocationActivity"
-            android:label="@string/title_activity_view_location" >
-        </activity>
+            android:name=".ViewLocationActivity"
+            android:label="@string/title_activity_view_location" />
         <activity
-            android:name="edu.np.ece.assettracking.PickBeaconActivity"
-            android:label="@string/title_activity_pick_beacon" >
-        </activity>
+            android:name=".PickBeaconActivity"
+            android:label="@string/title_activity_pick_beacon" />
         <activity
-            android:name="edu.np.ece.assettracking.LocationListActivity"
-            android:label="@string/title_activity_location_list" >
-        </activity>
+            android:name=".LocationListActivity"
+            android:label="@string/title_activity_location_list" />
         <activity
-            android:name="edu.np.ece.assettracking.EquipmentListActivity"
-            android:label="@string/title_activity_equipment_list" >
-        </activity>
+            android:name=".EquipmentListActivity"
+            android:label="@string/title_activity_equipment_list" />
         <activity
-            android:name="edu.np.ece.assettracking.ViewEquipmentActivity"
-            android:label="@string/title_activity_view_equipment" >
-        </activity>
+            android:name=".ViewEquipmentActivity"
+            android:label="@string/title_activity_view_equipment" />
+
+        <service
+            android:name=".BeaconScanningService"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name=".BeaconIntentService"
+            android:exported="false" />
+
+        <receiver
+            android:name=".MyAlarmReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":remote" />
     </application>
 
 </manifest>

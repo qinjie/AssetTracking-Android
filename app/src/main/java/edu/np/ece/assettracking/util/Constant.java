@@ -31,18 +31,23 @@ public class Constant {
     static {
         Map<String, String> apiUrls = new HashMap<>();
         apiUrls.put("base", "http://128.199.77.122/assettracking/api/index.php");
+
+        apiUrls.put("country_post_hello", "/v1/countries/post-hello");
+
         apiUrls.put("project_url_list", "/v1/projects");
         apiUrls.put("project_url_view", "/v1/projects/<id>?expand=floors,nodes,owner,users");
         apiUrls.put("project_url_update", "/v1/projects/<id>");
         apiUrls.put("project_url_delete", "/v1/projects/<id>");
         apiUrls.put("project_url_create", "/v1/projects");
         apiUrls.put("project_url_search", "/v1/projects/search?<query>");
+
         apiUrls.put("location_url_list", "/v1/locations");
         apiUrls.put("location_url_view", "/v1/locations/<id>?expand=beacons");
         apiUrls.put("location_url_update", "/v1/locations/<id>");
         apiUrls.put("location_url_delete", "/v1/locations/<id>");
         apiUrls.put("location_url_create", "/v1/locations");
         apiUrls.put("location_url_search", "/v1/locations/search?<query>");
+
         apiUrls.put("equipment_url_list", "/v1/equipments");
         apiUrls.put("equipment_url_view", "/v1/equipments/<id>?expand=beacons");
         apiUrls.put("equipment_url_update", "/v1/equipments/<id>");
@@ -60,6 +65,7 @@ public class Constant {
         apiUrls.put("beacon_url_search", "/v1/beacons/search?<query>");
         apiUrls.put("beacon_url_assign_to_location", "/v1/beacons/<id>/assign-to-location/<locationId>");
         apiUrls.put("beacon_url_assign_to_equipment", "/v1/beacons/<id>/assign-to-equipment/<equipmentId>");
+        apiUrls.put("beacon_url_check_nearby_beacons", "/v1/beacons/check-nearby-beacons");
 
         apiUrls.put("equipmentlocation_url_list", "/v1/equipment-locations");
         apiUrls.put("equipmentlocation_url_view", "/v1/equipment-locations/<id>?expand=equipment,location");

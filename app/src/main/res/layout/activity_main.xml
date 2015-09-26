@@ -73,4 +73,10 @@
         android:text="Movie List"
         android:layout_gravity="right" />
 
+    <Button
+        android:id="@+id/btAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Alarm" />
+
 </LinearLayout>
