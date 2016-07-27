@@ -9,6 +9,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+
 import edu.np.ece.assettracking.model.LocationData;
 
 public class ViewLocationActivity extends AppCompatActivity {
@@ -29,12 +31,12 @@ public class ViewLocationActivity extends AppCompatActivity {
         Intent i = getIntent();
         if (i != null) {
             String str = i.getStringExtra("LOCATION");
-            tvLocation.setText(str);
-//            Gson gson = new Gson();
-//            LocationData data = gson.fromJson(str, LocationData.class);
-//            updateToForm(data);
+//            tvLocation.setText(str);
+            Gson gson = new Gson();
+            LocationData data = gson.fromJson(str, LocationData.class);
+            initForm();
+            updateToForm(data);
         }
-
 
     }
 
@@ -65,6 +67,7 @@ public class ViewLocationActivity extends AppCompatActivity {
         etLatitude.setText(String.valueOf(data.getLatitude()));
         etLongitude.setText(String.valueOf(data.getLongitude()));
         etCountry.setText(String.valueOf(data.getCountry()));
+        etBeacon.setText(String.valueOf(data.getBeaconName()));
     }
 
     @Override

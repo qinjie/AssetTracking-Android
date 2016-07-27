@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.np.ece.assettracking.Preferences;
+
 /**
  * Created by zqi2 on 19/9/2015.
  */
@@ -32,7 +34,8 @@ public class Constant {
 
     static {
         Map<String, String> apiUrls = new HashMap<>();
-        apiUrls.put("base", "http://128.199.77.122/assettracking/api/index.php");
+//        apiUrls.put("base", "http://128.199.77.122/assettracking/api/index.php");
+        apiUrls.put("base", Preferences.root);
 
         apiUrls.put("country_post_hello", "/v1/countries/post-hello");
 

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,13 +16,18 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.np.ece.assettracking.Retrofit.ServerApi;
+import edu.np.ece.assettracking.Retrofit.ServiceGenerator;
 import edu.np.ece.assettracking.model.EquipmentData;
 import edu.np.ece.assettracking.util.Constant;
 import edu.np.ece.assettracking.util.CustomJsonObjectRequest;
+import retrofit2.Call;
+import retrofit2.Callback;
 
 public class NewEquipmentActivity extends AppCompatActivity {
     public static final String TAG = NewEquipmentActivity.class.getSimpleName();
@@ -33,6 +39,7 @@ public class NewEquipmentActivity extends AppCompatActivity {
     TextView tvInfo;
 
     EquipmentData mEquipment;
+    private ServerApi api;
 
     private View.OnClickListener btSaveListener = new View.OnClickListener() {
         @Override
@@ -63,23 +70,51 @@ public class NewEquipmentActivity extends AppCompatActivity {
     private void callApiCreateEquipment(final EquipmentData data) {
         String url = Constant.APIS.get("base") + Constant.APIS.get("equipment_url_create");
         String json = gson.toJson(data, EquipmentData.class);
-        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, json,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        try {
-                            int equipmentId = json.getInt("id");
-                            mEquipment.setId(equipmentId);
-                            Toast.makeText(getBaseContext(), "Equipment created successfully.", Toast.LENGTH_SHORT).show();
-                            callApiAssignBeaconToEquipment(mEquipment.getBeaconId(), mEquipment.getId());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
-        );
-        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
+
+        JsonObject obj = gson.toJsonTree(data).getAsJsonObject();
+
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.setEquipmentCreate(obj);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                try {
+                    int equipmentId = Integer.parseInt(response.body().get("id").toString());
+                    mEquipment.setId(equipmentId);
+                    Toast.makeText(getBaseContext(), "Equipment created successfully.", Toast.LENGTH_SHORT).show();
+                    callApiAssignBeaconToEquipment(mEquipment.getBeaconId(), mEquipment.getId());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+//        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, json,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject json) {
+//                        try {
+//                            int equipmentId = json.getInt("id");
+//                            mEquipment.setId(equipmentId);
+//                            Toast.makeText(getBaseContext(), "Equipment created successfully.", Toast.LENGTH_SHORT).show();
+//                            callApiAssignBeaconToEquipment(mEquipment.getBeaconId(), mEquipment.getId());
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                },
+//                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+//        );
+//        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
     }
 
     private void callApiAssignBeaconToEquipment(int beaconId, int equipmentId) {
@@ -87,21 +122,44 @@ public class NewEquipmentActivity extends AppCompatActivity {
         url = url.replace("<id>", String.valueOf(beaconId));
         url = url.replace("<equipmentId>", String.valueOf(equipmentId));
 
-        CustomJsonObjectRequest putRequest = new CustomJsonObjectRequest(Request.Method.PUT, url,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        String response = json.toString();
-                        Toast.makeText(getBaseContext(), response, Toast.LENGTH_SHORT).show();
-                        tvInfo.setText(response);
-                        Intent i = new Intent(getBaseContext(), ViewEquipmentActivity.class);
-                        i.putExtra("LOCATION", gson.toJson(mEquipment));
-                        startActivity(i);
-                    }
-                },
-                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
-        );
-        MyApplication.getInstance().addToRequestQueue(putRequest, TAG);
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.setBeaconEquipmentCreate(beaconId, equipmentId);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> res) {
+                String response = res.body().toString();
+                Toast.makeText(getBaseContext(), response, Toast.LENGTH_SHORT).show();
+                tvInfo.setText(response);
+                Intent i = new Intent(getBaseContext(), ViewEquipmentActivity.class);
+                i.putExtra("EQUIPMENT", gson.toJson(mEquipment));
+                startActivity(i);
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+//        CustomJsonObjectRequest putRequest = new CustomJsonObjectRequest(Request.Method.PUT, url,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject json) {
+//                        String response = json.toString();
+//                        Toast.makeText(getBaseContext(), response, Toast.LENGTH_SHORT).show();
+//                        tvInfo.setText(response);
+//                        Intent i = new Intent(getBaseContext(), ViewEquipmentActivity.class);
+//                        i.putExtra("EQUIPMENT", gson.toJson(mEquipment));
+//                        startActivity(i);
+//                    }
+//                },
+//                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+//        );
+//        MyApplication.getInstance().addToRequestQueue(putRequest, TAG);
     }
 
     private View.OnClickListener beBeaconListener = new View.OnClickListener() {

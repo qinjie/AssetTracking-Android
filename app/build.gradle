@@ -5,7 +5,7 @@ android {
     buildToolsVersion "22.0.1"
 
     defaultConfig {
-        applicationId "edu.np.ece.assettracking"
+        applicationId "edu.np.ece.assettracking2"
         minSdkVersion 19
         targetSdkVersion 22
         versionCode 1
@@ -25,6 +25,7 @@ dependencies {
     // Add the following line to add Estimote Android SDK
     // Find latest version number on https://github.com/Estimote/Android-SDK/releases
     compile 'com.estimote:sdk:0.8.8@aar'
+//    compile 'com.estimote:sdk:0.9.4@aar'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'org.apache.httpcomponents:httpcore:4.2.4'
     compile('org.apache.httpcomponents:httpmime:4.3.5') {
@@ -34,4 +35,9 @@ dependencies {
     }
     compile 'com.google.code.gson:gson:2.3'
     compile 'com.android.support:design:22.2.1'
+
+    //Retrofit
+    compile 'com.squareup.retrofit2:retrofit:2.0.2'
+    compile 'com.squareup.retrofit2:converter-gson:2.0.2'
+    compile 'org.altbeacon:android-beacon-library:2.8.1'
 }

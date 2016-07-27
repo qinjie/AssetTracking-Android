@@ -22,6 +22,7 @@ import com.estimote.sdk.Region;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import edu.np.ece.assettracking.adapter.BeaconScanAdapter;
 import edu.np.ece.assettracking.adapter.NavDrawerListAdapter;
@@ -67,21 +68,21 @@ public class ScanBeaconActivity extends AppCompatActivity {
         ListView list = (ListView) findViewById(R.id.lvBeacon);
         list.setAdapter(adapter);
 
-        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
-        region = new Region("ranged region", ESTIMOTE_UUID, null, null);
-
-        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
-            @Override
-            public void onBeaconsDiscovered(Region region, List<Beacon> list) {
-                Log.d(TAG, "Ranged beacons: " + list);
-                arrayList.clear();
-                for (Beacon beacon : list) {
-                    BeaconData data = new BeaconData(beacon);
-                    arrayList.add(data);
-                }
-                adapter.notifyDataSetChanged();
-            }
-        });
+//        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
+//        region = new Region("ranged region", ESTIMOTE_UUID, null, null);
+//
+//        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+//            @Override
+//            public void onBeaconsDiscovered(Region region, List<Beacon> list) {
+//                Log.d(TAG, "Ranged beacons: " + list);
+//                arrayList.clear();
+//                for (Beacon beacon : list) {
+//                    BeaconData data = new BeaconData(beacon);
+//                    arrayList.add(data);
+//                }
+//                adapter.notifyDataSetChanged();
+//            }
+//        });
     }
 
     @Override
@@ -89,34 +90,34 @@ public class ScanBeaconActivity extends AppCompatActivity {
         super.onStart();
 
         // Check if device supports Bluetooth Low Energy.
-        if (!beaconManager.hasBluetooth()) {
-            Toast.makeText(this, "Device does not have Bluetooth Low Energy", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        // If Bluetooth is not enabled, ask user to enable it.
-        if (!beaconManager.isBluetoothEnabled()) {
-            try {
-                getSupportActionBar().setSubtitle("enable Bluetooth, then run app");
-            } catch (Exception e) {
-            }
-            return;
-        }
+//        if (!beaconManager.hasBluetooth()) {
+//            Toast.makeText(this, "Device does not have Bluetooth Low Energy", Toast.LENGTH_LONG).show();
+//            return;
+//        }
+//
+//        // If Bluetooth is not enabled, ask user to enable it.
+//        if (!beaconManager.isBluetoothEnabled()) {
+//            try {
+//                getSupportActionBar().setSubtitle("enable Bluetooth, then run app");
+//            } catch (Exception e) {
+//            }
+//            return;
+//        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
-            @Override
-            public void onServiceReady() {
-                try {
-                    beaconManager.startRanging(region);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
+//            @Override
+//            public void onServiceReady() {
+//                try {
+//                    beaconManager.startRanging(region);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
     }
 
     @Override

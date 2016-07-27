@@ -11,7 +11,8 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
-            context.stopService(new Intent(context, BeaconScanningService.class));
+            Preferences.notify(context, "System Boot", "ACTION_BOOT_COMPLETED");
+            Preferences.goMonitoring(context);
         }
     }
 }

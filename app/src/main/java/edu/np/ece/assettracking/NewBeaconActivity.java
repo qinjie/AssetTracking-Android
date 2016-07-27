@@ -1,9 +1,14 @@
 package edu.np.ece.assettracking;
 
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,26 +18,37 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.estimote.sdk.Beacon;
-import com.estimote.sdk.BeaconManager;
-import com.estimote.sdk.Region;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import org.json.JSONArray;
-import org.json.JSONException;
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+import org.altbeacon.bluetooth.BleAdvertisement;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import edu.np.ece.assettracking.Retrofit.ServerApi;
+import edu.np.ece.assettracking.Retrofit.ServiceGenerator;
 import edu.np.ece.assettracking.model.BeaconData;
 import edu.np.ece.assettracking.util.Constant;
-import edu.np.ece.assettracking.util.CustomJsonObjectRequest;
+import retrofit2.Call;
+import retrofit2.Callback;
 
-public class NewBeaconActivity extends AppCompatActivity {
+public class NewBeaconActivity extends AppCompatActivity implements BeaconConsumer {
     private final String TAG = NewBeaconActivity.class.getSimpleName();
+//    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
+    private static final String ESTIMOTE_UUID = "04180F18-0A09-536D-6172-745461677300";
     Gson gson = new Gson();
 
     BeaconManager beaconManager;
@@ -42,6 +58,7 @@ public class NewBeaconActivity extends AppCompatActivity {
     TextView tvCreated, tvInfo;
     Button btRegister, btRefresh;
     LinearLayout containerCreated;
+    private ServerApi api;
 
     private View.OnClickListener btRegisterListener = new View.OnClickListener() {
         @Override
@@ -71,17 +88,7 @@ public class NewBeaconActivity extends AppCompatActivity {
     private View.OnClickListener btRefreshListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
-                @Override
-                public void onServiceReady() {
-                    try {
-                        beaconManager.startRanging(region);
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
+            startRanging();
         }
     };
 
@@ -113,24 +120,50 @@ public class NewBeaconActivity extends AppCompatActivity {
         btRefresh = (Button) findViewById(R.id.btRefresh);
         btRefresh.setOnClickListener(btRefreshListener);
 
-        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
-        region = new Region("ranged region",
-                "B9407F30-F5F8-466E-AFF9-25556B57FE6D", null, null);
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+//        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24"));
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24"));
+//        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout();
+//        try {
+//            beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3,i:4-19,i:20-21,i:22-23,p:24-24"));
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+//        region = new Region("Monitored Region", Identifier.parse("B9407F30-F5F8-466E-AFF9-25556B57FE6D"), null, null);
+//        region = new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null);
+        region = new Region("Monitored Region", null, null, null);
+        beaconManager.bind(this);
 
-        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+
+    }
+
+    @Override
+    public void onBeaconServiceConnect() {
+        startRanging();
+    }
+
+    private void startRanging(){
+        beaconManager.setForegroundScanPeriod(TimeUnit.SECONDS.toMillis(1));
+        beaconManager.setForegroundBetweenScanPeriod(Constant.SCAN_PERIOD * 1000);
+        beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
-            public void onBeaconsDiscovered(Region region, List<Beacon> list) {
-                if (!list.isEmpty()) {
-                    Beacon beacon = list.get(0);
+            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                if (!beacons.isEmpty()) {
+                    final Beacon beacon = (Beacon)beacons.toArray()[0];
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            etUuid.setText(beacon.getId1().toString().toUpperCase());
+                            etMajor.setText(String.valueOf(beacon.getId2().toInt()));
+                            etMinor.setText(String.valueOf(beacon.getId3().toInt()));
+                        }
+                    });
 
-                    etUuid.setText(beacon.getProximityUUID().toUpperCase());
-                    etMajor.setText(String.valueOf(beacon.getMajor()));
-                    etMinor.setText(String.valueOf(beacon.getMinor()));
-                    callApiGetBeacon(beacon.getProximityUUID(), beacon.getMajor(), beacon.getMinor());
+                    callApiGetBeacon(beacon.getId1().toString(), beacon.getId2().toInt(), beacon.getId3().toInt());
 
                     try {
-                        beaconManager.stopRanging(region);
-                    } catch (RemoteException e) {
+                        beaconManager.stopRangingBeaconsInRegion(region);
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 
@@ -139,54 +172,116 @@ public class NewBeaconActivity extends AppCompatActivity {
                 }
             }
         });
+
+        try {
+            beaconManager.startRangingBeaconsInRegion(region);
+        } catch (RemoteException e) {    }
     }
 
     private void callApiGetBeacon(String uuid, int major, int minor) {
         String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_search");
         String query = String.format("uuid=%s&major=%d&minor=%d", uuid, major, minor);
         url = url.replace("<query>", query);
-        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.GET, url,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        try {
-                            JSONArray array = json.getJSONArray("items");
-                            if (array.length() <= 0) return;
-                            JSONObject obj = array.getJSONObject(0);
-                            int id = obj.getInt("id");
-                            String name = obj.getString("label");
-                            etId.setText(String.valueOf(id));
-                            etName.setText(name);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
-        );
-        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
+
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.getBeaconSearch(uuid, major, minor);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                try {
+                    JsonArray array = response.body().getAsJsonArray("items");
+                    if (array.size() <= 0) return;
+                    JSONObject obj =  new JSONObject(array.get(0).toString());
+                    int id = obj.getInt("id");
+                    String name = obj.getString("label");
+                    etId.setText(String.valueOf(id));
+                    etName.setText(name);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+//        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.GET, url,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject json) {
+//                        try {
+//                            JSONArray array = json.getJSONArray("items");
+//                            if (array.length() <= 0) return;
+//                            JSONObject obj = array.getJSONObject(0);
+//                            int id = obj.getInt("id");
+//                            String name = obj.getString("label");
+//                            etId.setText(String.valueOf(id));
+//                            etName.setText(name);
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                },
+//                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+//        );
+//        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
     }
 
     private void callApiCreateBeacon(BeaconData data) {
         String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_create");
         String json = gson.toJson(data, BeaconData.class);
-        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, json,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        try {
-                            etId.setText(String.valueOf(json.getInt("id")));
-                            etId.setVisibility(View.VISIBLE);
-                            tvInfo.setText("Create successful.");
-                            tvInfo.setVisibility(View.VISIBLE);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
-        );
-        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
+
+        JsonObject obj = gson.toJsonTree(data).getAsJsonObject();
+        obj.remove("locationId");
+        obj.remove("equipmentId");
+
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.setBeaconCreate(obj);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                try {
+                    etId.setText(response.body().get("id").toString());
+                    etId.setVisibility(View.VISIBLE);
+                    tvInfo.setText("Create successful.");
+                    tvInfo.setVisibility(View.VISIBLE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+//        json = obj.toString();
+//        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, json,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject json) {
+//                        try {
+//                            etId.setText(String.valueOf(json.getInt("id")));
+//                            etId.setVisibility(View.VISIBLE);
+//                            tvInfo.setText("Create successful.");
+//                            tvInfo.setVisibility(View.VISIBLE);
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                },
+//                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+//        );
+//        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
     }
 
     private void callApiUpdateBeacon(BeaconData data) {
@@ -194,25 +289,51 @@ public class NewBeaconActivity extends AppCompatActivity {
         url = url.replace("<id>", String.valueOf(data.getId()));
 //        String json = gson.toJson(data, BeaconData.class);
         JsonObject obj = new JsonObject();
-        obj.addProperty("name", data.getName());
-        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.PUT, url, obj.toString(),
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        try {
-                            etId.setText(String.valueOf(json.getInt("id")));
-                            etId.setVisibility(View.VISIBLE);
-                            tvInfo.setText("Update successful.");
-                            tvInfo.setVisibility(View.VISIBLE);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+//        obj.addProperty("name", data.getName());
+        obj.addProperty("label", data.getLabel());
 
-                    }
-                },
-                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
-        );
-        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.setBeaconUpdate(data.getId(), obj);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                try {
+                    etId.setText(String.valueOf(response.body().get("id").toString()));
+                    etId.setVisibility(View.VISIBLE);
+                    tvInfo.setText("Update successful.");
+                    tvInfo.setVisibility(View.VISIBLE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+//        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.PUT, url, obj.toString(),
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject json) {
+//                        try {
+//                            etId.setText(String.valueOf(json.getInt("id")));
+//                            etId.setVisibility(View.VISIBLE);
+//                            tvInfo.setText("Update successful.");
+//                            tvInfo.setVisibility(View.VISIBLE);
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                    }
+//                },
+//                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+//        );
+//        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
     }
 
     @Override
@@ -223,6 +344,11 @@ public class NewBeaconActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        beaconManager.unbind(this);
     }
 
 
@@ -238,6 +364,11 @@ public class NewBeaconActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to the action bar's Up/Home button
             case android.R.id.home:
+                try {
+                    beaconManager.stopRangingBeaconsInRegion(region);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 finish();
                 return true;
             case R.id.action_settings:
@@ -245,5 +376,15 @@ public class NewBeaconActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        try {
+            beaconManager.stopRangingBeaconsInRegion(region);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        this.finish();
     }
 }

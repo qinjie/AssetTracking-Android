@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Asset Tracking</string>
+    <string name="app_name">Asset Tracking 2</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
@@ -41,4 +41,5 @@
 
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
+    <string name="title_activity_monitoring">MonitoringActivity</string>
 </resources>

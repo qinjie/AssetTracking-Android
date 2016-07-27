@@ -1,142 +1,161 @@
 package edu.np.ece.assettracking;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
+import android.support.annotation.Nullable;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.estimote.sdk.Beacon;
-import com.estimote.sdk.BeaconManager;
-import com.estimote.sdk.Region;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import org.json.JSONObject;
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import edu.np.ece.assettracking.model.BeaconData;
+import edu.np.ece.assettracking.Retrofit.ServerApi;
+import edu.np.ece.assettracking.Retrofit.ServiceGenerator;
+import edu.np.ece.assettracking.model.BeaconAlt;
 import edu.np.ece.assettracking.util.Constant;
-import edu.np.ece.assettracking.util.CustomJsonObjectRequest;
+import retrofit2.Call;
+import retrofit2.Callback;
 
-public class BeaconScanningService extends Service {
-    private static final String TAG = BeaconScanningService.class.getSimpleName();
+public class BeaconScanningService extends Service implements BeaconConsumer{
     private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
     private static final Region[] BEACONS = new Region[]{
-            new Region("region1", ESTIMOTE_UUID, null, null),
+            new Region("Monitored Region", Identifier.parse("B9407F30-F5F8-466E-AFF9-25556B57FE6D"), Identifier.fromInt(3810), Identifier.fromInt(48523))
     };
-
-    NotificationManager mNotificationManager;
-    ArrayList<BeaconData> arrayList;
     private BeaconManager beaconManager;
-    Gson gson = new Gson();
+    private NotificationManager mNotificationManager;
+    private ServerApi api;
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, Intent intent) {
+            String action = intent.getAction();
 
-    public BeaconScanningService() {
-    }
+            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                        BluetoothAdapter.ERROR);
+                if (state != BluetoothAdapter.STATE_ON) {
+                    handler.removeMessages(1);
+                    Preferences.notify(getApplicationContext(), "Handler Removed", "Remove handler");
+                    Preferences.isScanning = false;
+                    stopSelf();
+                }
+            }
+        }
+    };
+    private Handler handler = new Handler() {
 
-    @Override
-    public IBinder onBind(Intent arg0) {
-        return null;
-    }
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1: {
+                    Preferences.isScanning = false;
+                    Preferences.notify(getApplicationContext(), "Scanning Service Killed", "Kill scanning");
+                    stopSelf();
+                }
+                break;
+            }
+        }
+    };
 
     @Override
     public void onCreate() {
-        Log.d(TAG, "onCreate");
-        beaconManager = new BeaconManager(getApplicationContext());
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24"));
+        beaconManager.bind(this);
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
-        // Check if device supports Bluetooth Low Energy.
-        if (!beaconManager.hasBluetooth()) {
-            Toast.makeText(this, "Device does not have Bluetooth Low Energy.", Toast.LENGTH_LONG).show();
-            this.stopSelf();
-        }
-        if (!beaconManager.isBluetoothEnabled()) {
-            this.stopSelf();
-        }
-//        if (!beaconManager.isBluetoothEnabled()) {
-//            BluetoothUtils.enableBluetooth(true);
-//        }
-        startRanging();
 
-        Notification noti = new Notification.Builder(this)
-                .setContentTitle("Beacon Service Started")
-                .setContentText("Start scanning")
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .build();
-        mNotificationManager.notify(1, noti);
+        registerReceiver(mMessageReceiver, new IntentFilter("android.bluetooth.adapter.action.STATE_CHANGED"));
+        handler.sendEmptyMessageDelayed(1, 60 * 1000);
+
+
+        Preferences.notify(getApplicationContext(), "Scanning Service Started", "Start scanning");
 
         return START_STICKY;
     }
 
     @Override
-    public void onDestroy() {
-        Log.d(TAG, "onDestroy");
-        beaconManager.disconnect();
-        mNotificationManager.cancel(1);
-        Notification noti = new Notification.Builder(BeaconScanningService.this)
-                .setContentTitle("Beacon Service Stopped")
-                .setContentText("Stop scanning")
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .build();
-        mNotificationManager.notify(1, noti);
-    }
-
-    private void startRanging() {
-        beaconManager.setForegroundScanPeriod(TimeUnit.SECONDS.toMillis(1), Constant.SCAN_PERIOD * 1000);
-        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+    public void onBeaconServiceConnect() {
+        beaconManager.setBackgroundScanPeriod(TimeUnit.SECONDS.toMillis(1));
+        beaconManager.setBackgroundBetweenScanPeriod(Constant.SCAN_PERIOD * 1000);
+        beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
-            public void onBeaconsDiscovered(Region paramRegion, List<Beacon> list) {
-                if (list.size() > 0) {
-                    ArrayList<Beacon> array = new ArrayList<Beacon>(list.size());
-                    array.addAll(list);
-
-//                    //-- For testing purpose
-//                    Beacon b = list.get(0);
-//                    Beacon b1 = new Beacon("B9407F30-F5F8-466E-AFF9-25556B57FE6D", b.getName(), b.getMacAddress(), 58949, 29933, b.getMeasuredPower(), b.getRssi());
-//                    Beacon b2 = new Beacon("B9407F30-F5F8-466E-AFF9-25556B57FE6D", b.getName(), b.getMacAddress(), 24890, 6699, b.getMeasuredPower(), b.getRssi());
-//                    Beacon b3 = new Beacon("B9407F30-F5F8-466E-AFF9-25556B57FE6D", b.getName(), b.getMacAddress(), 0, 0, b.getMeasuredPower(), b.getRssi());
-//                    array.add(b1);
-//                    array.add(b2);
-//                    array.add(b3);
-
+            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                if (beacons.size() > 0) {
+                    ArrayList<Beacon> array = new ArrayList<Beacon>(beacons.size());
+                    array.addAll(beacons);
                     Toast.makeText(getApplicationContext(), "Found " + array.size() + " beacon.", Toast.LENGTH_LONG).show();
                     uploadNearbyBeacons(array);
                 }
             }
         });
 
-        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
-            @Override
-            public void onServiceReady() {
-                try {
-                    Log.d(TAG, "connected");
-                    for (Region region : BEACONS) {
-                        beaconManager.startRanging(region);
-                    }
-                } catch (RemoteException e) {
-                    Log.d("TAG", "Error while starting monitoring");
-                }
+        try {
+            for (Region region : BEACONS) {
+                beaconManager.startRangingBeaconsInRegion(region);
             }
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        beaconManager.unbind(this);
+        this.unregisterReceiver(mMessageReceiver);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
 
-    private void uploadNearbyBeacons(final List<Beacon> list) {
+
+    private void uploadNearbyBeacons(final List<Beacon> li) {
+        List<BeaconAlt> list = new ArrayList<>();
+        for(Beacon b: li){
+            BeaconAlt ba = new BeaconAlt();
+            ba.setMacAddress(b.getBluetoothAddress());
+            ba.setMajor(b.getId2().toInt());
+            ba.setMeasuredPower(b.getTxPower());
+            ba.setMinor(b.getId3().toInt());
+            ba.setName(b.getBluetoothName());
+            ba.setProximityUUID(b.getId1().toString().toUpperCase());
+            ba.setRssi(b.getRssi());
+            list.add(ba);
+        }
         String url = Constant.APIS.get("base") + Constant.APIS.get("beacon_url_check_nearby_beacons");
 
         Gson gson = new GsonBuilder().create();
@@ -144,17 +163,33 @@ public class BeaconScanningService extends Service {
         JsonObject obj = new JsonObject();
         obj.add("beacons", myCustomArray);
         String str = obj.toString();
-        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, str,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        Toast.makeText(getBaseContext(), json.toString(), Toast.LENGTH_SHORT).show();
-                        Log.i(TAG, json.toString());
-                    }
-                },
-                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
-        );
-        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
-    }
+//        CustomJsonObjectRequest postRequest = new CustomJsonObjectRequest(Request.Method.POST, url, str,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject json) {
+//                        Toast.makeText(getBaseContext(), json.toString(), Toast.LENGTH_SHORT).show();
+//                        Log.i(TAG, json.toString());
+//                    }
+//                },
+//                CustomJsonObjectRequest.getDefaultErrorListener(getBaseContext())
+//        );
+//        MyApplication.getInstance().addToRequestQueue(postRequest, TAG);
 
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.sendNearByBeaConList(obj);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+//                Toast.makeText(getBaseContext(), response.body().toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable error) {
+                error.printStackTrace();
+            }
+        });
+    }
 }

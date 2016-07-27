@@ -21,6 +21,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.np.ece.assettracking.Retrofit.ServerApi;
+import edu.np.ece.assettracking.Retrofit.ServiceGenerator;
 import edu.np.ece.assettracking.model.Movie;
 
 public class MovieActivity extends AppCompatActivity {
@@ -33,6 +35,7 @@ public class MovieActivity extends AppCompatActivity {
     private List<Movie> movieList = new ArrayList<Movie>();
     private ListView listView;
     private CustomMovieAdapter adapter;
+    private ServerApi api;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +54,10 @@ public class MovieActivity extends AppCompatActivity {
         // changing action bar color
         getSupportActionBar().setBackgroundDrawable(
                 new ColorDrawable(Color.parseColor("#1b1b1b")));
+
+        //Creating Retrofit request
+        api = ServiceGenerator.createService(ServerApi.class);
+//        Call<RequestBody>
 
         // Creating volley request obj
         JsonArrayRequest movieReq = new JsonArrayRequest(url,

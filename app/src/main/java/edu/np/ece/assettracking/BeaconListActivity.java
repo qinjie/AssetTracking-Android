@@ -20,6 +20,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,8 +32,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.np.ece.assettracking.Retrofit.ServerApi;
+import edu.np.ece.assettracking.Retrofit.ServiceGenerator;
 import edu.np.ece.assettracking.model.BeaconData;
 import edu.np.ece.assettracking.util.Constant;
+import retrofit2.Call;
+import retrofit2.Callback;
 
 public class BeaconListActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -40,6 +47,7 @@ public class BeaconListActivity extends AppCompatActivity {
     private ArrayList<BeaconData> beaconList = new ArrayList<BeaconData>();
     private ListView listView;
     private CustomBeaconAdapter adapter;
+    private ServerApi api;
 
     private TextView tvInfo;
 
@@ -48,7 +56,7 @@ public class BeaconListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_beacon_list);
 
-        android.support.v7.app.ActionBar actionbar = getSupportActionBar();
+        final android.support.v7.app.ActionBar actionbar = getSupportActionBar();
         if (actionbar != null) {
             actionbar.setDisplayHomeAsUpEnabled(true);
             actionbar.setDisplayShowHomeEnabled(true);
@@ -66,61 +74,104 @@ public class BeaconListActivity extends AppCompatActivity {
         getSupportActionBar().setBackgroundDrawable(
                 new ColorDrawable(Color.parseColor("#1b1b1b")));
 
-        // Creating volley request obj
-        JsonObjectRequest request = new JsonObjectRequest(url,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        VolleyLog.d(TAG, response.toString());
-                        hideProgressDialog();
-
-                        JSONArray array = null;
-                        try {
-                            array = response.getJSONArray("items");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            return;
-                        }
-                        // Parsing json
-                        for (int i = 0; i < array.length(); i++) {
-                            try {
-                                JSONObject obj = array.getJSONObject(i);
-                                BeaconData beacon = gson.fromJson(obj.toString(), BeaconData.class);
-                                beaconList.add(beacon);
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        adapter.notifyDataSetChanged();
-                    }
-                }, new Response.ErrorListener() {
+        // Creating Retrofit request
+        String creds = String.format("%s:%s", "user1", "123456");
+        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+        auth = auth.substring(0, auth.length() - 1);
+        api = ServiceGenerator.createService(ServerApi.class, auth);
+        Call<JsonObject> call = api.getBeaConList();
+        call.enqueue(new Callback<JsonObject>() {
             @Override
-            public void onErrorResponse(VolleyError error) {
+            public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                hideProgressDialog();
+
+
+                JsonArray array = null;
+                try {
+                    array = response.body().getAsJsonArray("items");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+                // Parsing json
+                for (int i = 0; i < array.size(); i++) {
+                    try {
+                        JsonElement obj = array.get(i);
+                        BeaconData beacon = gson.fromJson(obj, BeaconData.class);
+                        beaconList.add(beacon);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable error) {
                 hideProgressDialog();
                 Log.e(TAG, "Error: " + error.getMessage());
                 tvInfo.setText(error.getMessage());
 
-                NetworkResponse networkResponse = error.networkResponse;
-                if (networkResponse != null) {
-                    Toast.makeText(getBaseContext(), "Error: " + networkResponse.statusCode, Toast.LENGTH_SHORT).show();
-                }
                 error.printStackTrace();
             }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> params = new HashMap<String, String>();
-                String creds = String.format("%s:%s", "user1", "123456");
-                String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
-                params.put("Authorization", auth);
-                return params;
-            }
-        };
+        });
 
-        // Adding request to request queue
-        MyApplication.getInstance().addToRequestQueue(request);
+////         Creating volley request obj
+//        JsonObjectRequest request = new JsonObjectRequest(url,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        VolleyLog.d(TAG, response.toString());
+//                        hideProgressDialog();
+//
+//                        JSONArray array = null;
+//                        try {
+//                            array = response.getJSONArray("items");
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                            return;
+//                        }
+//                        // Parsing json
+//                        for (int i = 0; i < array.length(); i++) {
+//                            try {
+//                                JSONObject obj = array.getJSONObject(i);
+//                                BeaconData beacon = gson.fromJson(obj.toString(), BeaconData.class);
+//                                beaconList.add(beacon);
+//
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//
+//                        adapter.notifyDataSetChanged();
+//                    }
+//                }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                hideProgressDialog();
+//                Log.e(TAG, "Error: " + error.getMessage());
+//                tvInfo.setText(error.getMessage());
+//
+//                NetworkResponse networkResponse = error.networkResponse;
+//                if (networkResponse != null) {
+//                    Toast.makeText(getBaseContext(), "Error: " + networkResponse.statusCode, Toast.LENGTH_SHORT).show();
+//                }
+//                error.printStackTrace();
+//            }
+//        }) {
+//            @Override
+//            public Map<String, String> getHeaders() throws AuthFailureError {
+//                HashMap<String, String> params = new HashMap<String, String>();
+//                String creds = String.format("%s:%s", "user1", "123456");
+//                String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+//                params.put("Authorization", auth);
+//                return params;
+//            }
+//        };
+//
+////         Adding request to request queue
+//        MyApplication.getInstance().addToRequestQueue(request);
     }
 
     @Override
