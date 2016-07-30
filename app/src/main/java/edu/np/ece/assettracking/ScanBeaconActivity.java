@@ -256,7 +256,7 @@ public class ScanBeaconActivity extends AppCompatActivity {
         setTitle(navMenuTitles[position]);
         mDrawerLayout.closeDrawer(mDrawerList);
     }
-
+    
     @Override
     public void setTitle(CharSequence title) {
         mTitle = title;

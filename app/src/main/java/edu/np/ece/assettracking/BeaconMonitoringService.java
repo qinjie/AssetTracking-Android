@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import edu.np.ece.assettracking.util.Constant;
 
 public class BeaconMonitoringService extends Service implements BootstrapNotifier{
+    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
     private RegionBootstrap regionBootstrap;
     private NotificationManager mNotificationManager;
 
@@ -67,7 +68,7 @@ public class BeaconMonitoringService extends Service implements BootstrapNotifie
                 beaconManager.setBackgroundScanPeriod(TimeUnit.SECONDS.toMillis(1));
                 beaconManager.setBackgroundBetweenScanPeriod(Constant.SCAN_PERIOD * 1000);
 
-                Region region = new Region("Monitored Region", Identifier.parse("B9407F30-F5F8-466E-AFF9-25556B57FE6D"), Identifier.fromInt(3810), Identifier.fromInt(48523));
+                Region region = new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null);
                 regionBootstrap = new RegionBootstrap(this, region);
             }else{
                 Preferences.notify(getApplicationContext(), "Bluetooth Disabled", "Disable Bluetooth");

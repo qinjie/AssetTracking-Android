@@ -46,7 +46,7 @@ import retrofit2.Callback;
 public class BeaconScanningService extends Service implements BeaconConsumer{
     private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
     private static final Region[] BEACONS = new Region[]{
-            new Region("Monitored Region", Identifier.parse("B9407F30-F5F8-466E-AFF9-25556B57FE6D"), Identifier.fromInt(3810), Identifier.fromInt(48523))
+            new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null)
     };
     private BeaconManager beaconManager;
     private NotificationManager mNotificationManager;

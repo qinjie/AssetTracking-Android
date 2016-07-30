@@ -47,8 +47,7 @@ import retrofit2.Callback;
 
 public class NewBeaconActivity extends AppCompatActivity implements BeaconConsumer {
     private final String TAG = NewBeaconActivity.class.getSimpleName();
-//    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
-    private static final String ESTIMOTE_UUID = "04180F18-0A09-536D-6172-745461677300";
+    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
     Gson gson = new Gson();
 
     BeaconManager beaconManager;
@@ -121,17 +120,8 @@ public class NewBeaconActivity extends AppCompatActivity implements BeaconConsum
         btRefresh.setOnClickListener(btRefreshListener);
 
         beaconManager = BeaconManager.getInstanceForApplication(this);
-//        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24"));
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24"));
-//        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout();
-//        try {
-//            beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3,i:4-19,i:20-21,i:22-23,p:24-24"));
-//        }catch (Exception e){
-//            e.printStackTrace();
-//        }
-//        region = new Region("Monitored Region", Identifier.parse("B9407F30-F5F8-466E-AFF9-25556B57FE6D"), null, null);
-//        region = new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null);
-        region = new Region("Monitored Region", null, null, null);
+        region = new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null);
         beaconManager.bind(this);
 
 
