@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        beaconManager = ((MyApplication) getApplication()).getBeaconManager();
 //        region = new Region("ranged region",
-//                "B9407F30-F5F8-466E-AFF9-25556B57FE6D", null, null);
+//                Preferences.UUID, null, null);
 //
 //        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
 //            @Override

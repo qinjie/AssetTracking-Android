@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import edu.np.ece.assettracking.util.Constant;
 
 public class BeaconMonitoringService extends Service implements BootstrapNotifier{
-    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
+    private static final String ESTIMOTE_UUID = Preferences.UUID;
     private RegionBootstrap regionBootstrap;
     private NotificationManager mNotificationManager;
 
@@ -45,15 +45,25 @@ public class BeaconMonitoringService extends Service implements BootstrapNotifie
             }
         }
     };
+
+    private BroadcastReceiver mMessageReceiverGeofence = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, Intent intent) {
+            Preferences.notify(getApplicationContext(), "Exited Geofence", "Stop monitoring");
+            stopSelf();
+        }
+    };
     @Override
     public void onCreate() {
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        registerReceiver(mMessageReceiverGeofence, new IntentFilter("Exit.Geofence"));
 
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        registerReceiver(mMessageReceiverGeofence, new IntentFilter("Exit.Geofence"));
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             Preferences.notify(getApplicationContext(), "Bluetooth Null", "Device does not support bluetooth");
@@ -69,6 +79,7 @@ public class BeaconMonitoringService extends Service implements BootstrapNotifie
                 beaconManager.setBackgroundBetweenScanPeriod(Constant.SCAN_PERIOD * 1000);
 
                 Region region = new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null);
+//                Region region = new Region("Monitored Region", null, null, null);
                 regionBootstrap = new RegionBootstrap(this, region);
             }else{
                 Preferences.notify(getApplicationContext(), "Bluetooth Disabled", "Disable Bluetooth");
@@ -98,7 +109,12 @@ public class BeaconMonitoringService extends Service implements BootstrapNotifie
     }
     @Override
     public void onDestroy() {
-        this.unregisterReceiver(mMessageReceiver);
-        Preferences.notify(getApplicationContext(), "Monitoring Service Stopped", "Stop monitoring");
+        try {
+            this.unregisterReceiver(mMessageReceiver);
+            this.unregisterReceiver(mMessageReceiverGeofence);
+            Preferences.notify(getApplicationContext(), "Monitoring Service Stopped", "Stop monitoring");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Asset Tracking 2</string>
+    <string name="app_name">Asset Tracking</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
@@ -14,6 +14,7 @@
     <string name="title_activity_location_list">Location List</string>
     <string name="title_activity_equipment_list">Equipment List</string>
     <string name="title_activity_view_equipment">View Equipment</string>
+    <string name="title_activity_setting">Setting</string>
 
     <string name="drawer_open">Slider Menu Opened</string>
     <string name="drawer_close">Slider Menu Closed</string>
@@ -26,6 +27,7 @@
         <item>New Location</item>
         <item>Equipment List</item>
         <item>New Equipment</item>
+        <item>Setting</item>
     </string-array>
 
     <!-- Nav Drawer List Item Icons -->
@@ -37,9 +39,41 @@
         <item>@mipmap/ic_action_add</item>
         <item>@mipmap/ic_action_search</item>
         <item>@mipmap/ic_action_add</item>
+        <item>@mipmap/ic_action_setting</item>
     </array>
 
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
     <string name="title_activity_monitoring">MonitoringActivity</string>
+    <string name="title_activity_maps">Map</string>
+
+    <string name="location_permission_denied">xxx</string>
+    <string name="permission_required_toast">yyy</string>
+    <string name="permission_rationale_location">zzz</string>
+
+    <!-- Geofence -->
+
+    <string name="geofences_added">Geofences added</string>
+    <string name="geofences_removed">Geofences removed</string>
+
+    <!-- Error strings -->
+    <string name="not_connected">GoogleApiClient no yet connected. Try again.</string>
+    <string name="geofence_not_available">Geofence service is not available now</string>
+    <string name="geofence_too_many_geofences">Your app has registered too many geofences</string>
+    <string name="geofence_too_many_pending_intents">
+        You have provided too many PendingIntents to the addGeofences() call
+    </string>
+    <string name="unknown_geofence_error">
+        Unknown error: the Geofence service is not available now
+    </string>
+    <string name="geofence_transition_invalid_type">
+        Geofence transition error: invalid transition type %1$d
+    </string>
+
+    <!-- Transition type strings -->
+    <string name="geofence_transition_entered">Entered</string>
+    <string name="geofence_transition_exited">Exited</string>
+    <string name="unknown_geofence_transition">Unknown Transition</string>
+
+    <string name="geofence_transition_notification_text">Click notification to return to app</string>
 </resources>

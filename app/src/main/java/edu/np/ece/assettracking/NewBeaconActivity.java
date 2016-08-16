@@ -47,7 +47,7 @@ import retrofit2.Callback;
 
 public class NewBeaconActivity extends AppCompatActivity implements BeaconConsumer {
     private final String TAG = NewBeaconActivity.class.getSimpleName();
-    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
+    private static final String ESTIMOTE_UUID = Preferences.UUID;
     Gson gson = new Gson();
 
     BeaconManager beaconManager;
@@ -122,6 +122,7 @@ public class NewBeaconActivity extends AppCompatActivity implements BeaconConsum
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24"));
         region = new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null);
+//        region = new Region("Monitored Region", null, null, null);
         beaconManager.bind(this);
 
 
@@ -182,8 +183,12 @@ public class NewBeaconActivity extends AppCompatActivity implements BeaconConsum
             @Override
             public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
                 try {
+                    if (response.body() == null || response.body().getAsJsonArray("items").size() <= 0) {
+                        etId.setText("");
+                        etName.setText("");
+                        return;
+                    }
                     JsonArray array = response.body().getAsJsonArray("items");
-                    if (array.size() <= 0) return;
                     JSONObject obj =  new JSONObject(array.get(0).toString());
                     int id = obj.getInt("id");
                     String name = obj.getString("label");

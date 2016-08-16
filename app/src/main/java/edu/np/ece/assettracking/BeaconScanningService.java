@@ -44,10 +44,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 
 public class BeaconScanningService extends Service implements BeaconConsumer{
-    private static final String ESTIMOTE_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
+    private static final String ESTIMOTE_UUID = Preferences.UUID;
     private static final Region[] BEACONS = new Region[]{
             new Region("Monitored Region", Identifier.parse(ESTIMOTE_UUID), null, null)
     };
+//    private static final Region[] BEACONS = new Region[]{
+//            new Region("Monitored Region", null, null, null)
+//    };
     private BeaconManager beaconManager;
     private NotificationManager mNotificationManager;
     private ServerApi api;
@@ -183,7 +186,7 @@ public class BeaconScanningService extends Service implements BeaconConsumer{
         call.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
-//                Toast.makeText(getBaseContext(), response.body().toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getBaseContext(), response.body().toString(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
