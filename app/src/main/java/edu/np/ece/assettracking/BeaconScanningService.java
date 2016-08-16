@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import edu.np.ece.assettracking.Retrofit.ServerApi;
@@ -186,7 +187,11 @@ public class BeaconScanningService extends Service implements BeaconConsumer{
         call.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
-                Toast.makeText(getBaseContext(), response.body().toString(), Toast.LENGTH_SHORT).show();
+                try {
+                    Toast.makeText(getBaseContext(), response.body().toString(), Toast.LENGTH_SHORT).show();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
 
             @Override

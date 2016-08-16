@@ -4,7 +4,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.media.RingtoneManager;
+import android.os.Debug;
+import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 
@@ -39,8 +42,10 @@ public class Preferences {
     }
 
     public static void notify(Context context, String title, String content) {
-        if(!title.contains("Entered") && !title.contains("Exited"))
+        boolean isBeingDebugged = android.os.Debug.isDebuggerConnected();
+        if(!isBeingDebugged){
             return;
+        }
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification noti = new Notification.Builder(context)
                 .setContentTitle(title)

@@ -85,6 +85,11 @@ public class GeofenceTransitionsIntentService extends IntentService {
                     triggeringGeofences
             );
 
+            boolean isBeingDebugged = android.os.Debug.isDebuggerConnected();
+            if(!isBeingDebugged){
+                return;
+            }
+
             // Send notification and log the transition details.
             sendNotification(geofenceTransitionDetails);
             Log.i(TAG, geofenceTransitionDetails);
