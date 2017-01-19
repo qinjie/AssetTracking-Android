@@ -85,7 +85,6 @@ public class BeaconListActivity extends AppCompatActivity {
             public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
                 hideProgressDialog();
 
-
                 JsonArray array = null;
                 try {
                     array = response.body().getAsJsonArray("items");
@@ -99,7 +98,6 @@ public class BeaconListActivity extends AppCompatActivity {
                         JsonElement obj = array.get(i);
                         BeaconData beacon = gson.fromJson(obj, BeaconData.class);
                         beaconList.add(beacon);
-
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
